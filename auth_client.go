@@ -4,9 +4,14 @@ package auth
 
 import (
 	"context"
+	"crypto/rsa"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
+	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -306,7 +311,29 @@ func (c *Client) Close() error {
 
 // loadPublicKey 載入 RSA 公鑰
 func loadPublicKey(path string) (interface{}, error) {
-	// 這裡需要根據實際的公鑰格式實作
-	// 為了簡化，這裡返回一個假的實作
-	return nil, fmt.Errorf("loadPublicKey not implemented - please implement based on your key format")
+	// 讀取公鑰檔案
+	keyData, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read public key file: %w", err)
+	}
+
+	// 解析 PEM 格式
+	block, _ := pem.Decode(keyData)
+	if block == nil {
+		return nil, errors.New("failed to decode PEM block containing public key")
+	}
+
+	// 解析公鑰
+	publicKey, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse public key: %w", err)
+	}
+
+	// 確認是 RSA 公鑰
+	rsaPublicKey, ok := publicKey.(*rsa.PublicKey)
+	if !ok {
+		return nil, errors.New("not an RSA public key")
+	}
+
+	return rsaPublicKey, nil
 }
