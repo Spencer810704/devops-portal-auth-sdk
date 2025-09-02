@@ -1,4 +1,4 @@
-module shared-auth-sdk
+module github.com/Spencer810704/devops-portal-auth-sdk
 
 go 1.21
 
